@@ -87,8 +87,6 @@ impl AppRun {
     }
 
     fn mounts(&self) -> Result<(), std::io::Error> {
-        fs::create_dir_all(&self.mount_dir)?;
-
         // Create a new mount namespace
         info!("Creating new mount namespace");
         let clone_flags = CloneFlags::CLONE_NEWNS;
@@ -182,7 +180,8 @@ impl AppRun {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
 
-    let current_dir = env::current_dir()?;
+    let current_exe = env::current_exe()?;
+    let current_dir = current_exe.parent().unwrap();
     let nix_dir: PathBuf = current_dir.join("nix");
     if !nix_dir.exists() {
         error!("nix directory does not exist");
@@ -192,8 +191,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         )));
     }
 
-    let mount_dir = current_dir.join("mount_dir");
+    let mount_dir = current_dir.join("mountroot");
+    if !mount_dir.exists() {
+        error!("nix directory does not exist");
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "mount directory does not exist",
+        )));
+    }
+
     let entrypoint = current_dir.join("entrypoint");
+    if !entrypoint.exists() {
+        error!("nix directory does not exist");
+        return Err(Box::new(std::io::Error::new(
+            std::io::ErrorKind::NotFound,
+            "entrypoint does not exist",
+        )));
+    }
 
     let app = AppRun {
         mount_dir,
