@@ -21,6 +21,7 @@ use id_map::*;
 struct AppRun {
     mount_dir: PathBuf,
     nix_dir: PathBuf,
+    entrypoint: PathBuf,
     debug: bool,
 }
 
@@ -51,7 +52,8 @@ impl AppRun {
         }
 
         // Execute a shell
-        let cmd = CString::new("entrypoint")?;
+        // https://stackoverflow.com/questions/38948669/whats-the-most-direct-way-to-convert-a-path-to-a-c-char
+        let cmd = CString::new(self.entrypoint.as_os_str().to_str().unwrap())?;
         let args = std::env::args();
         let args: Vec<CString> = args.map(|s| CString::new(s).unwrap()).collect();
         info!("Executing entrypoint with {:?}", args);
@@ -191,11 +193,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let mount_dir = current_dir.join("mount_dir");
+    let entrypoint = current_dir.join("entrypoint");
 
     let app = AppRun {
         mount_dir,
         nix_dir,
         debug: false,
+        entrypoint,
     };
     app.exec()?;
 
