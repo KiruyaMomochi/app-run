@@ -65,8 +65,6 @@ impl AppRun {
         let gid = Gid::current();
         info!("uid: {}, gid: {}", uid, gid);
 
-        let map = read_uid_map()?;
-
         let uid_map: UidMap = UidMap {
             inside_id: uid,
             outside_id: uid,
